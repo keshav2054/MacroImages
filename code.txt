@@ -1,0 +1,207 @@
+Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As LongPtr)
+
+Sub TextFile_PullData()
+
+ Dim rngFormat As Range
+Dim TextFile As Integer
+Dim FilePath As String
+Dim FileContent As String
+Dim fileurl As String
+Dim fileurl1 As String
+Dim counter As Long
+
+Dim fso As Scripting.FileSystemObject
+Dim SourceFolder As Scripting.folder, SubFolder As Scripting.folder
+Dim FileItem As Scripting.File
+
+Set fso = New Scripting.FileSystemObject
+
+'add your watermark folderpath
+
+watermarkPath = "C:\Users\keshav_choudhary\Desktop\background\watermark"
+
+
+Set SourceFolder = fso.GetFolder(watermarkPath)
+
+backgroundPath = "C:\Users\keshav_choudhary\Desktop\background"
+backgroundfileExtension = "\*back*"
+
+File = Dir(backgroundPath & backgroundfileExtension)
+
+counter = 0
+TextSize = "15,16,18,19,20,21,22,23"
+TextColor = "1,2,3,4,5,6,7,8"
+TextFont = "Arial,Arial Black,CG Omega,CG Times,CloisterBlack BT,Comic Sans MS,Coronet,CloisterBlack BT"
+
+SplitTextSize = Split(TextSize, ",")
+SplitTextColor = Split(TextColor, ",")
+SplitTextFont = Split(TextFont, ",")
+
+For Each FileItem In SourceFolder.Files
+
+If (File <> "") Then
+backgroundUrl = backgroundPath & "\" & File
+
+File = Dir
+
+End If
+
+ThisDocument.Content.Select
+Selection.Delete
+
+DitchPictures
+
+FilePath = "D:\Copier\input.txt"
+
+TextFile = FreeFile
+
+Open FilePath For Input As TextFile
+
+FileContent = Input(LOF(TextFile), TextFile)
+
+
+
+Set objRange = ThisDocument.Range
+objRange.StartOf Unit:=WdUnits.wdStory, _
+Extend:=WdMovementType.wdMove
+objRange.Text = FileContent
+
+Count_para = ThisDocument.Paragraphs.Count
+
+ Set rngFormat = ThisDocument.Range( _
+ Start:=ThisDocument.Paragraphs(1).Range.Start, _
+ End:=ThisDocument.Paragraphs(Count_para).Range.End)
+ With rngFormat
+.Font.Name = SplitTextFont(counter)
+.Font.Size = CInt(SplitTextSize(counter))
+.Font.ColorIndex = CInt(SplitTextColor(counter))
+ .Bold = True
+ '.Font.Italic = True
+ 
+ .ParagraphFormat.Alignment = wdAlignParagraphJustify
+ 
+ End With
+ 
+ Sleep 3000
+ 
+Selection.EndKey Unit:=wdStory
+           
+ 
+ 
+ fnBackGroundPic = FileItem.Path
+ 
+ InsertHeaderLogoQA (fnBackGroundPic)
+ 
+
+ 
+AddBackground (backgroundUrl)
+
+With ThisDocument.Shapes(1)
+.Left = -72
+.Top = -72
+End With
+
+'Close Text File
+Close TextFile
+
+Selection.WholeStory
+Selection.Copy
+Selection.PasteSpecial Link:=False, DataType:=wdPasteEnhancedMetafile, _
+Placement:=wdInLine, DisplayAsIcon:=False
+
+
+ImageName = "Clone" & counter
+ImageConvert (ImageName)
+counter = counter + 1
+Next FileItem
+
+End Sub
+
+ Private Function InsertHeaderLogoQA(fnBackGroundPic As String)
+
+Dim imagePath As String
+    imagePath = fnBackGroundPic
+
+    ThisDocument.Shapes.AddPicture FileName:=imagePath, _
+    LinkToFile:=False, _
+    SaveWithDocument:=True, _
+    Left:=ThisDocument.PageSetup.PageWidth / 4, _
+    Top:=80, _
+    Anchor:=Selection.Range
+
+ 
+       
+End Function
+
+Sub DitchPictures()
+Dim objPic As InlineShape
+For Each objPic In ActiveDocument.InlineShapes
+objPic.Delete
+Next objPic
+End Sub
+ Private Function AddBackground(url)
+
+  'ActiveDocument.Background.Fill.Visible = msoTrue
+   'ActiveDocument.Background.Fill.ForeColor.RGB = RGB(255, 255, 255)
+    'ActiveDocument.Background.Fill.Transparency = 0.9
+    'ActiveDocument.Background.Fill.UserPicture _
+        '"C:\Users\keshav_choudhary\Desktop\images.jpg"
+    'ActiveWindow.ActivePane.VerticalPercentScrolled = 0
+    
+ Dim oILS As InlineShape, oShp As Shape
+ 
+ Selection.GoTo What:=wdGoToHeading, Which:=wdGoToFirst
+ 
+Set pic = Selection.InlineShapes.AddPicture(FileName:= _
+        url, LinkToFile:=False, _
+        SaveWithDocument:=True)
+        
+      
+      Set oShp = pic.ConvertToShape
+      
+     page_height = ThisDocument.PageSetup.PageHeight
+     page_width = ThisDocument.PageSetup.PageWidth
+      
+    With oShp
+    oShp.Top = 0
+   .Height = page_height
+  .Width = page_width
+  .WrapFormat.Type = wdWrapBehind
+  .LockAspectRatio = msoTrue
+ 
+
+  
+  
+End With
+
+End Function
+
+
+Sub ImageConvert(Name As String)
+
+
+ActiveDocument.SaveAs FileName:=ThisDocument.Path & "\ExportedImage.htm", FileFormat:=wdFormatHTML, _
+LockComments:=False, Password:="", AddToRecentFiles:=True, WritePassword _
+:="", ReadOnlyRecommended:=False, EmbedTrueTypeFonts:=False, _
+SaveNativePictureFormat:=False, SaveFormsData:=False, SaveAsAOCELetter:= _
+False
+
+oldFilePath = ThisDocument.Path & "\ExportedImage_files\image002.png"
+NewFilePath = ThisDocument.Path & "\ExportedImage_files\" & Name & ".png"
+
+Name oldFilePath As NewFilePath
+
+path_export = ThisDocument.Path & "\ExportedImage_files\"
+Dim fso As New FileSystemObject, aFile As File
+Set SourceFolder = fso.GetFolder(path_export)
+
+For Each FileItem In SourceFolder.Files
+If (InStr(1, FileItem.Name, ".xml") Or InStr(1, FileItem.Name, ".mso") Or InStr(1, FileItem.Name, ".htm") Or InStr(1, FileItem.Name, ".emz") Or InStr(1, FileItem.Name, ".thmx")) Then
+    Kill FileItem.Path
+End If
+
+Next FileItem
+End Sub
+
+
+
